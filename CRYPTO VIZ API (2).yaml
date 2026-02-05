@@ -1,0 +1,2024 @@
+openapi: 3.0.3
+info:
+  title: CRYPTO VIZ API
+  version: 1.0.0
+  x-logo:
+    url: https://example.com/logo.png
+    altText: CRYPTO VIZ Logo
+  description: "\n## \U0001F680 API de Visualisation de Crypto-monnaies en Temps Réel\n\
+    \n### Description\nCRYPTO VIZ est une plateforme complète de visualisation et\
+    \ d'analyse de crypto-monnaies \noffrant des données en temps réel, des analyses\
+    \ de sentiment et des prédictions de prix.\n\n### Architecture\n- **Backend**:\
+    \ Django REST Framework\n- **Base de données**: TimescaleDB (séries temporelles)\
+    \ + SQLite (métadonnées)\n- **Streaming**: Apache Kafka + Apache Spark\n- **Cache**:\
+    \ Redis\n\n### Sources de Données\nLes données proviennent de plusieurs sources\
+    \ :\n- **Prix temps réel**: Kraken WebSocket API\n- **Articles crypto**: Scraping\
+    \ de sites spécialisés (CoinTelegraph, etc.)\n- **Sentiment**: Analyse NLP des\
+    \ articles\n\n### Authentification\nActuellement, l'API est ouverte (pas d'authentification\
+    \ requise).\nUne authentification JWT sera implémentée dans une version future.\n\
+    \n### Rate Limiting\n- **Utilisateurs anonymes**: 100 requêtes/heure\n- **Utilisateurs\
+    \ authentifiés**: 1000 requêtes/heure\n\n### Formats de Données\n- Toutes les\
+    \ réponses sont au format **JSON**\n- Les timestamps sont au format **ISO 8601**\
+    \ (UTC)\n- Les prix sont en **USD**\n\n### Contact & Support\nPour toute question,\
+    \ ouvrez une issue sur le repository GitHub.\n    "
+  contact:
+    name: CRYPTO VIZ Team
+    email: support@cryptoviz.com
+    url: https://github.com/cryptoviz
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+paths:
+  /api/v1/alert/historique/:
+    get:
+      operationId: getAlertHistory
+      description: "\nRetourne l'historique des alertes générées lors de variations\
+        \ de prix significatives.\n\n## Description\n\nLes alertes sont générées automatiquement\
+        \ lorsque le prix d'une crypto\nvarie de plus d'un certain pourcentage (seuil\
+        \ par défaut: 1%).\n\n## Types d'alertes\n\n| Type | Description | Couleur\
+        \ suggérée |\n|------|-------------|------------------|\n| `PRICE_UP` | Hausse\
+        \ significative | \U0001F7E2 Vert |\n| `PRICE_DOWN` | Baisse significative\
+        \ | \U0001F534 Rouge |\n\n## Utilisation Frontend\n\n```javascript\n// Récupérer\
+        \ les alertes\nconst response = await fetch('/api/v1/alert/historique/?periode=24h');\n\
+        const data = await response.json();\n\n// Afficher les notifications\ndata.data.forEach(alert\
+        \ => {\n    const icon = alert.alert_type === 'PRICE_UP' ? '\U0001F4C8' :\
+        \ '\U0001F4C9';\n    const color = alert.alert_type === 'PRICE_UP' ? 'green'\
+        \ : 'red';\n    \n    showNotification({\n        title: `${icon} ${alert.pair}`,\n\
+        \        message: `Variation de ${alert.change_percent.toFixed(2)}%`,\n  \
+        \      color: color,\n        price: alert.last_price\n    });\n});\n\n//\
+        \ Filtrer par sévérité\nconst majorAlerts = data.data.filter(a => Math.abs(a.change_percent)\
+        \ > 5);\n```\n\n## Seuils de déclenchement\n\n| Seuil | Signification |\n\
+        |-------|---------------|\n| 1% | Variation normale (défaut) |\n| 3% | Variation\
+        \ notable |\n| 5% | Variation importante |\n| 10%+ | Mouvement majeur |\n\n\
+        ## Limites\n\n- Maximum 500 résultats par requête\n- Données sur 90 jours\
+        \ glissants\n        "
+      summary: Récupérer l'historique des alertes de prix
+      parameters:
+      - in: query
+        name: date_debut
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de début pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          **Exemples:**
+          - `2024-01-15T00:00:00Z`
+          - `2024-01-15T10:30:00+01:00`
+
+          ⚠️ Doit être utilisé avec `date_fin`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: date_fin
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de fin pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          ⚠️ Doit être utilisé avec `date_debut`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: pair
+        schema:
+          type: string
+        description: Filtrer par paire de trading (optionnel)
+        examples:
+          Bitcoin:
+            value: XBT/USD
+          Ethereum:
+            value: ETH/USD
+          Toutes:
+            value: null
+      - in: query
+        name: periode
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 30d
+          - 7d
+          default: 24h
+        description: |-
+          Période de temps pour filtrer les données.
+
+          **Valeurs acceptées:**
+          - `1h` : Dernière heure
+          - `24h` : Dernières 24 heures (défaut)
+          - `7d` : 7 derniers jours
+          - `30d` : 30 derniers jours
+
+          ⚠️ Si `date_debut` et `date_fin` sont fournis, ce paramètre est ignoré.
+        examples:
+          DernièreHeure:
+            value: 1h
+            summary: Dernière heure
+          24Heures:
+            value: 24h
+            summary: 24 heures
+          7Jours:
+            value: 7d
+            summary: 7 jours
+          30Jours:
+            value: 30d
+            summary: 30 jours
+      tags:
+      - Alerts
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertHistoryResponse'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/article/historique/:
+    get:
+      operationId: getArticleHistory
+      description: "\nRetourne l'historique des articles de presse crypto avec leur\
+        \ analyse de sentiment.\n\n## Description\n\nLes articles sont collectés automatiquement\
+        \ depuis des sites spécialisés\n(CoinTelegraph, CoinDesk, etc.) et analysés\
+        \ par NLP pour extraire :\n- Les crypto-monnaies mentionnées\n- Le score et\
+        \ label de sentiment\n- Un résumé du contenu\n\n## Sources d'articles\n\n\
+        | Source | Type | Fréquence |\n|--------|------|-----------|\n| CoinTelegraph\
+        \ | News | Temps réel |\n| CoinDesk | News | Temps réel |\n| Bitcoin Magazine\
+        \ | Analysis | Quotidien |\n\n## Utilisation Frontend\n\n```javascript\n//\
+        \ Récupérer les articles sur Bitcoin\nconst response = await fetch('/api/v1/article/historique/?crypto_symbol=BTC&periode=24h');\n\
+        const data = await response.json();\n\n// Afficher dans une liste\ndata.data.forEach(article\
+        \ => {\n    const sentimentClass = article.sentiment_label === 'positive'\
+        \ ? 'green' : \n                          article.sentiment_label === 'negative'\
+        \ ? 'red' : 'gray';\n    \n    articleList.append(`\n        <div class=\"\
+        article ${sentimentClass}\">\n            <h3>${article.title}</h3>\n    \
+        \        <p>${article.summary}</p>\n            <span>Source: ${article.website}</span>\n\
+        \            <span>Sentiment: ${article.sentiment_score.toFixed(2)}</span>\n\
+        \        </div>\n    `);\n});\n```\n\n## Filtrage par crypto\n\nUtilisez `crypto_symbol`\
+        \ pour filtrer les articles mentionnant une crypto spécifique.\nSi non fourni,\
+        \ retourne tous les articles.\n\n## Limites\n\n- Maximum 100 résultats par\
+        \ requête\n- Données sur 90 jours glissants\n        "
+      summary: Récupérer l'historique des articles crypto
+      parameters:
+      - in: query
+        name: crypto_symbol
+        schema:
+          type: string
+        description: Filtrer par crypto-monnaie mentionnée (optionnel)
+        examples:
+          Bitcoin:
+            value: BTC
+          Ethereum:
+            value: ETH
+          Tous:
+            value: null
+      - in: query
+        name: date_debut
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de début pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          **Exemples:**
+          - `2024-01-15T00:00:00Z`
+          - `2024-01-15T10:30:00+01:00`
+
+          ⚠️ Doit être utilisé avec `date_fin`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: date_fin
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de fin pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          ⚠️ Doit être utilisé avec `date_debut`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: periode
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 30d
+          - 7d
+          default: 24h
+        description: |-
+          Période de temps pour filtrer les données.
+
+          **Valeurs acceptées:**
+          - `1h` : Dernière heure
+          - `24h` : Dernières 24 heures (défaut)
+          - `7d` : 7 derniers jours
+          - `30d` : 30 derniers jours
+
+          ⚠️ Si `date_debut` et `date_fin` sont fournis, ce paramètre est ignoré.
+        examples:
+          DernièreHeure:
+            value: 1h
+            summary: Dernière heure
+          24Heures:
+            value: 24h
+            summary: 24 heures
+          7Jours:
+            value: 7d
+            summary: 7 jours
+          30Jours:
+            value: 30d
+            summary: 30 jours
+      tags:
+      - Articles
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleHistoryResponse'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/config/crypto/:
+    get:
+      operationId: config_crypto_list
+      description: "\nRetourne la liste de toutes les crypto-monnaies configurées\
+        \ dans le système.\n\n**Utilisation Frontend:**\n- Afficher la liste des cryptos\
+        \ disponibles dans un sélecteur\n- Filtrer les cryptos actives pour les graphiques\n\
+        - Gérer les préférences utilisateur\n        "
+      summary: Lister toutes les crypto-monnaies configurées
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Configuration
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCryptoConfigurationList'
+              examples:
+                BitcoinConfiguration:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - id: 1
+                      symbol: BTC
+                      name: Bitcoin
+                      is_active: true
+                      created_at: '2024-01-15T10:30:00.000000Z'
+                      updated_at: '2024-01-15T10:30:00.000000Z'
+                  summary: Configuration pour Bitcoin
+                  description: Exemple de configuration de crypto-monnaie active
+                EthereumConfiguration:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - id: 2
+                      symbol: ETH
+                      name: Ethereum
+                      is_active: true
+                      created_at: '2024-01-15T10:31:00.000000Z'
+                      updated_at: '2024-01-15T10:31:00.000000Z'
+                  summary: Configuration pour Ethereum
+          description: ''
+    post:
+      operationId: config_crypto_create
+      description: "\nAjoute une nouvelle crypto-monnaie à suivre dans le système.\n\
+        \n**Champs requis:**\n- `symbol`: Symbole unique (ex: BTC, ETH)\n- `name`:\
+        \ Nom complet de la crypto\n\n**Exemple de payload:**\n```json\n{\n    \"\
+        symbol\": \"SOL\",\n    \"name\": \"Solana\",\n    \"is_active\": true\n}\n\
+        ```\n        "
+      summary: Ajouter une nouvelle crypto-monnaie
+      tags:
+      - Configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CryptoConfigurationRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoConfiguration'
+              examples:
+                BitcoinConfiguration:
+                  value:
+                    id: 1
+                    symbol: BTC
+                    name: Bitcoin
+                    is_active: true
+                    created_at: '2024-01-15T10:30:00.000000Z'
+                    updated_at: '2024-01-15T10:30:00.000000Z'
+                  summary: Configuration pour Bitcoin
+                  description: Exemple de configuration de crypto-monnaie active
+                EthereumConfiguration:
+                  value:
+                    id: 2
+                    symbol: ETH
+                    name: Ethereum
+                    is_active: true
+                    created_at: '2024-01-15T10:31:00.000000Z'
+                    updated_at: '2024-01-15T10:31:00.000000Z'
+                  summary: Configuration pour Ethereum
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/config/crypto/{id}/:
+    get:
+      operationId: config_crypto_retrieve
+      description: Retourne les détails d'une crypto-monnaie spécifique.
+      summary: Récupérer une crypto-monnaie par ID
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this crypto configuration.
+        required: true
+      tags:
+      - Configuration
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoConfiguration'
+              examples:
+                BitcoinConfiguration:
+                  value:
+                    id: 1
+                    symbol: BTC
+                    name: Bitcoin
+                    is_active: true
+                    created_at: '2024-01-15T10:30:00.000000Z'
+                    updated_at: '2024-01-15T10:30:00.000000Z'
+                  summary: Configuration pour Bitcoin
+                  description: Exemple de configuration de crypto-monnaie active
+                EthereumConfiguration:
+                  value:
+                    id: 2
+                    symbol: ETH
+                    name: Ethereum
+                    is_active: true
+                    created_at: '2024-01-15T10:31:00.000000Z'
+                    updated_at: '2024-01-15T10:31:00.000000Z'
+                  summary: Configuration pour Ethereum
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: config_crypto_update
+      description: Met à jour tous les champs d'une crypto-monnaie existante.
+      summary: Mettre à jour une crypto-monnaie
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this crypto configuration.
+        required: true
+      tags:
+      - Configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CryptoConfigurationRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoConfiguration'
+              examples:
+                BitcoinConfiguration:
+                  value:
+                    id: 1
+                    symbol: BTC
+                    name: Bitcoin
+                    is_active: true
+                    created_at: '2024-01-15T10:30:00.000000Z'
+                    updated_at: '2024-01-15T10:30:00.000000Z'
+                  summary: Configuration pour Bitcoin
+                  description: Exemple de configuration de crypto-monnaie active
+                EthereumConfiguration:
+                  value:
+                    id: 2
+                    symbol: ETH
+                    name: Ethereum
+                    is_active: true
+                    created_at: '2024-01-15T10:31:00.000000Z'
+                    updated_at: '2024-01-15T10:31:00.000000Z'
+                  summary: Configuration pour Ethereum
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    patch:
+      operationId: config_crypto_partial_update
+      description: Met à jour uniquement les champs fournis.
+      summary: Mettre à jour partiellement une crypto-monnaie
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this crypto configuration.
+        required: true
+      tags:
+      - Configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCryptoConfigurationRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoConfiguration'
+              examples:
+                BitcoinConfiguration:
+                  value:
+                    id: 1
+                    symbol: BTC
+                    name: Bitcoin
+                    is_active: true
+                    created_at: '2024-01-15T10:30:00.000000Z'
+                    updated_at: '2024-01-15T10:30:00.000000Z'
+                  summary: Configuration pour Bitcoin
+                  description: Exemple de configuration de crypto-monnaie active
+                EthereumConfiguration:
+                  value:
+                    id: 2
+                    symbol: ETH
+                    name: Ethereum
+                    is_active: true
+                    created_at: '2024-01-15T10:31:00.000000Z'
+                    updated_at: '2024-01-15T10:31:00.000000Z'
+                  summary: Configuration pour Ethereum
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    delete:
+      operationId: config_crypto_destroy
+      description: Supprime une crypto-monnaie de la configuration.
+      summary: Supprimer une crypto-monnaie
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this crypto configuration.
+        required: true
+      tags:
+      - Configuration
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/config/visualization/:
+    get:
+      operationId: config_visualization_list
+      description: "\nRetourne les configurations de visualisation sauvegardées.\n\
+        \n**Utilisation Frontend:**\n- Charger les dashboards sauvegardés\n- Restaurer\
+        \ les préférences utilisateur\n- Afficher la liste des configurations disponibles\n\
+        \n**Note:** Si l'utilisateur est authentifié, seules ses configurations sont\
+        \ retournées.\n        "
+      summary: Lister les configurations de visualisation
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Configuration
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedVisualizationParameterList'
+              examples:
+                DashboardBTC:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - id: 1
+                      name: Mon Dashboard BTC
+                      crypto_symbol: BTC
+                      time_range: 24h
+                      chart_type: candlestick
+                      indicators:
+                      - SMA_20
+                      - RSI
+                      - MACD
+                      created_at: '2024-01-15T10:30:00.000000Z'
+                      updated_at: '2024-01-15T10:30:00.000000Z'
+                  summary: Configuration de visualisation pour BTC
+          description: ''
+    post:
+      operationId: config_visualization_create
+      description: "\nSauvegarde une nouvelle configuration de visualisation.\n\n\
+        **Champs requis:**\n- `name`: Nom de la configuration\n- `crypto_symbol`:\
+        \ Symbole de la crypto\n- `time_range`: Plage temporelle\n- `chart_type`:\
+        \ Type de graphique\n\n**Exemple de payload:**\n```json\n{\n    \"name\":\
+        \ \"Mon Dashboard BTC\",\n    \"crypto_symbol\": \"BTC\",\n    \"time_range\"\
+        : \"24h\",\n    \"chart_type\": \"candlestick\",\n    \"indicators\": [\"\
+        SMA_20\", \"RSI\", \"MACD\"]\n}\n```\n\n**Types de graphiques supportés:**\n\
+        - `candlestick`: Chandeliers japonais\n- `line`: Courbe simple\n- `area`:\
+        \ Graphique en aire\n- `bar`: Barres verticales\n\n**Indicateurs techniques\
+        \ disponibles:**\n- `SMA_20`, `SMA_50`, `SMA_200`: Moyennes mobiles simples\n\
+        - `EMA_12`, `EMA_26`: Moyennes mobiles exponentielles\n- `RSI`: Relative Strength\
+        \ Index\n- `MACD`: Moving Average Convergence Divergence\n- `BOLLINGER`: Bandes\
+        \ de Bollinger\n        "
+      summary: Créer une configuration de visualisation
+      tags:
+      - Configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisualizationParameterRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisualizationParameter'
+              examples:
+                DashboardBTC:
+                  value:
+                    id: 1
+                    name: Mon Dashboard BTC
+                    crypto_symbol: BTC
+                    time_range: 24h
+                    chart_type: candlestick
+                    indicators:
+                    - SMA_20
+                    - RSI
+                    - MACD
+                    created_at: '2024-01-15T10:30:00.000000Z'
+                    updated_at: '2024-01-15T10:30:00.000000Z'
+                  summary: Configuration de visualisation pour BTC
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/config/visualization/{id}/:
+    get:
+      operationId: config_visualization_retrieve
+      description: Retourne les détails d'une configuration de visualisation.
+      summary: Récupérer une configuration par ID
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visualization parameter.
+        required: true
+      tags:
+      - Configuration
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisualizationParameter'
+              examples:
+                DashboardBTC:
+                  value:
+                    id: 1
+                    name: Mon Dashboard BTC
+                    crypto_symbol: BTC
+                    time_range: 24h
+                    chart_type: candlestick
+                    indicators:
+                    - SMA_20
+                    - RSI
+                    - MACD
+                    created_at: '2024-01-15T10:30:00.000000Z'
+                    updated_at: '2024-01-15T10:30:00.000000Z'
+                  summary: Configuration de visualisation pour BTC
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: config_visualization_update
+      description: Met à jour tous les champs d'une configuration existante.
+      summary: Mettre à jour une configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visualization parameter.
+        required: true
+      tags:
+      - Configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisualizationParameterRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisualizationParameter'
+              examples:
+                DashboardBTC:
+                  value:
+                    id: 1
+                    name: Mon Dashboard BTC
+                    crypto_symbol: BTC
+                    time_range: 24h
+                    chart_type: candlestick
+                    indicators:
+                    - SMA_20
+                    - RSI
+                    - MACD
+                    created_at: '2024-01-15T10:30:00.000000Z'
+                    updated_at: '2024-01-15T10:30:00.000000Z'
+                  summary: Configuration de visualisation pour BTC
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    patch:
+      operationId: config_visualization_partial_update
+      description: Met à jour uniquement les champs fournis.
+      summary: Mettre à jour partiellement une configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visualization parameter.
+        required: true
+      tags:
+      - Configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedVisualizationParameterRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisualizationParameter'
+              examples:
+                DashboardBTC:
+                  value:
+                    id: 1
+                    name: Mon Dashboard BTC
+                    crypto_symbol: BTC
+                    time_range: 24h
+                    chart_type: candlestick
+                    indicators:
+                    - SMA_20
+                    - RSI
+                    - MACD
+                    created_at: '2024-01-15T10:30:00.000000Z'
+                    updated_at: '2024-01-15T10:30:00.000000Z'
+                  summary: Configuration de visualisation pour BTC
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    delete:
+      operationId: config_visualization_destroy
+      description: Supprime une configuration de visualisation.
+      summary: Supprimer une configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visualization parameter.
+        required: true
+      tags:
+      - Configuration
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/health/:
+    get:
+      operationId: healthCheck
+      description: "\nEndpoint de vérification de santé (health check) du service.\n\
+        \n## Description\n\nRetourne l'état actuel du service API. Utilisé pour :\n\
+        - Monitoring (Prometheus, Grafana)\n- Load balancers (healthcheck)\n- Déploiement\
+        \ (readiness probe)\n\n## Utilisation\n\n```javascript\n// Vérifier si l'API\
+        \ est disponible\nasync function checkApiHealth() {\n    try {\n        const\
+        \ response = await fetch('/api/v1/health/');\n        const data = await response.json();\n\
+        \        return data.status === 'healthy';\n    } catch (error) {\n      \
+        \  return false;\n    }\n}\n```\n\n## Réponse\n\n| Champ | Description |\n\
+        |-------|-------------|\n| `status` | État du service (`healthy` ou `unhealthy`)\
+        \ |\n| `service` | Nom du service |\n| `version` | Version de l'API |\n  \
+        \  "
+      summary: Vérifier l'état de santé de l'API
+      tags:
+      - Health
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+          description: ''
+  /api/v1/prediction/{crypto_symbol}/historique/:
+    get:
+      operationId: getPredictionHistory
+      description: "\nRetourne l'historique des prédictions de prix pour une crypto-monnaie.\n\
+        \n## Description\n\nLes prédictions sont générées par des modèles ML basés\
+        \ sur l'analyse des tendances.\nActuellement, le modèle `moving_average` est\
+        \ utilisé (moyenne mobile avec écart-type).\n\n## Utilisation Frontend\n\n\
+        ```javascript\n// Récupérer les prédictions\nconst response = await fetch('/api/v1/prediction/BTC/historique/?periode=7d');\n\
+        const data = await response.json();\n\n// Afficher avec intervalles de confiance\n\
+        data.data.forEach(point => {\n    chart.addBand({\n        from: point.confidence_interval_low,\n\
+        \        to: point.confidence_interval_high,\n        color: 'rgba(100, 100,\
+        \ 255, 0.2)'\n    });\n    chart.addLine({\n        x: new Date(point.timestamp),\n\
+        \        y: point.predicted_price,\n        color: 'blue'\n    });\n});\n\
+        ```\n\n## Modèles disponibles\n\n| Modèle | Description | Précision estimée\
+        \ |\n|--------|-------------|-------------------|\n| `moving_average` | Moyenne\
+        \ mobile simple | ~60-70% |\n\n## Intervalles de confiance\n\nLes bornes `confidence_interval_low`\
+        \ et `confidence_interval_high` représentent\nl'intervalle dans lequel le\
+        \ prix a ~68% de chances de se trouver (±1 écart-type).\n\n## Limites\n\n\
+        - Maximum 1000 résultats par requête\n- Prédictions sur 90 jours glissants\n\
+        \        "
+      summary: Récupérer l'historique des prédictions de prix
+      parameters:
+      - in: path
+        name: crypto_symbol
+        schema:
+          type: string
+        description: Symbole de la crypto-monnaie
+        required: true
+        examples:
+          Bitcoin:
+            value: BTC
+          Ethereum:
+            value: ETH
+      - in: query
+        name: date_debut
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de début pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          **Exemples:**
+          - `2024-01-15T00:00:00Z`
+          - `2024-01-15T10:30:00+01:00`
+
+          ⚠️ Doit être utilisé avec `date_fin`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: date_fin
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de fin pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          ⚠️ Doit être utilisé avec `date_debut`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: periode
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 30d
+          - 7d
+          default: 24h
+        description: |-
+          Période de temps pour filtrer les données.
+
+          **Valeurs acceptées:**
+          - `1h` : Dernière heure
+          - `24h` : Dernières 24 heures (défaut)
+          - `7d` : 7 derniers jours
+          - `30d` : 30 derniers jours
+
+          ⚠️ Si `date_debut` et `date_fin` sont fournis, ce paramètre est ignoré.
+        examples:
+          DernièreHeure:
+            value: 1h
+            summary: Dernière heure
+          24Heures:
+            value: 24h
+            summary: 24 heures
+          7Jours:
+            value: 7d
+            summary: 7 jours
+          30Jours:
+            value: 30d
+            summary: 30 jours
+      tags:
+      - Predictions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionHistoryResponse'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/sentiment/{crypto_symbol}/historique/:
+    get:
+      operationId: getSentimentHistory
+      description: "\nRetourne l'historique des données de sentiment pour une crypto-monnaie\
+        \ spécifique.\n\n## Description\n\nLe sentiment est calculé à partir de l'analyse\
+        \ NLP des articles de presse crypto.\nLes données sont agrégées par fenêtres\
+        \ de 5 minutes par Apache Spark.\n\n## Utilisation Frontend\n\n```javascript\n\
+        // Exemple avec fetch\nconst response = await fetch('/api/v1/sentiment/BTC/historique/?periode=24h');\n\
+        const data = await response.json();\n\n// Afficher dans un graphique\ndata.data.forEach(point\
+        \ => {\n    chart.addPoint({\n        x: new Date(point.timestamp),\n    \
+        \    y: point.sentiment_score,\n        label: point.sentiment_label\n   \
+        \ });\n});\n```\n\n## Interprétation des scores\n\n| Score | Label | Signification\
+        \ |\n|-------|-------|---------------|\n| 0.0 - 0.4 | negative | Sentiment\
+        \ négatif (peur, incertitude) |\n| 0.4 - 0.6 | neutral | Sentiment neutre\
+        \ |\n| 0.6 - 1.0 | positive | Sentiment positif (optimisme, FOMO) |\n\n##\
+        \ Limites\n\n- Maximum 1000 résultats par requête\n- Données disponibles sur\
+        \ 90 jours glissants\n        "
+      summary: Récupérer l'historique du sentiment pour une crypto
+      parameters:
+      - in: path
+        name: crypto_symbol
+        schema:
+          type: string
+        description: 'Symbole de la crypto-monnaie (ex: BTC, ETH, SOL)'
+        required: true
+        examples:
+          Bitcoin:
+            value: BTC
+          Ethereum:
+            value: ETH
+          Solana:
+            value: SOL
+      - in: query
+        name: date_debut
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de début pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          **Exemples:**
+          - `2024-01-15T00:00:00Z`
+          - `2024-01-15T10:30:00+01:00`
+
+          ⚠️ Doit être utilisé avec `date_fin`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: date_fin
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de fin pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          ⚠️ Doit être utilisé avec `date_debut`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: periode
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 30d
+          - 7d
+          default: 24h
+        description: |-
+          Période de temps pour filtrer les données.
+
+          **Valeurs acceptées:**
+          - `1h` : Dernière heure
+          - `24h` : Dernières 24 heures (défaut)
+          - `7d` : 7 derniers jours
+          - `30d` : 30 derniers jours
+
+          ⚠️ Si `date_debut` et `date_fin` sont fournis, ce paramètre est ignoré.
+        examples:
+          DernièreHeure:
+            value: 1h
+            summary: Dernière heure
+          24Heures:
+            value: 24h
+            summary: 24 heures
+          7Jours:
+            value: 7d
+            summary: 7 jours
+          30Jours:
+            value: 30d
+            summary: 30 jours
+      tags:
+      - Sentiment
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SentimentHistoryResponse'
+              examples:
+                RéponseSentimentBTC:
+                  value:
+                    crypto_symbol: BTC
+                    count: 2
+                    data:
+                    - timestamp: '2024-01-15T14:30:00.000000Z'
+                      crypto_symbol: BTC
+                      sentiment_score: 0.85
+                      sentiment_label: positive
+                      source: aggregated_articles
+                      confidence: 0.92
+                    - timestamp: '2024-01-15T14:25:00.000000Z'
+                      crypto_symbol: BTC
+                      sentiment_score: 0.72
+                      sentiment_label: positive
+                      source: aggregated_articles
+                      confidence: 0.88
+                  summary: Réponse sentiment BTC
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ticker/historique/:
+    get:
+      operationId: getTickerHistory
+      description: "\nRetourne l'historique des prix (tickers) pour une paire de trading.\n\
+        \n## Description\n\nLes tickers contiennent les prix en temps réel collectés\
+        \ depuis Kraken.\nChaque ticker inclut le dernier prix, le bid, l'ask et le\
+        \ volume 24h.\n\n## Paires supportées\n\n| Paire | Description |\n|-------|-------------|\n\
+        | `XBT/USD` | Bitcoin (Kraken utilise XBT) |\n| `ETH/USD` | Ethereum |\n|\
+        \ `SOL/USD` | Solana |\n| `ADA/USD` | Cardano |\n| `MATIC/USD` | Polygon |\n\
+        | `DOT/USD` | Polkadot |\n| `LINK/USD` | Chainlink |\n| `USDT/USD` | Tether\
+        \ |\n\n## Utilisation Frontend\n\n```javascript\n// Récupérer l'historique\
+        \ des prix\nconst response = await fetch('/api/v1/ticker/historique/?pair=XBT/USD&periode=24h');\n\
+        const data = await response.json();\n\n// Créer un graphique candlestick\n\
+        const ohlcData = processToOHLC(data.data, '1h'); // Agrégation horaire\nchart.setData(ohlcData);\n\
+        ```\n\n## Spread et Liquidité\n\nLe spread (ask - bid) indique la liquidité\
+        \ du marché:\n- **< 0.1%** : Très liquide\n- **0.1% - 0.5%** : Normal\n- **>\
+        \ 0.5%** : Faible liquidité\n\n## Limites\n\n- Maximum 1000 résultats par\
+        \ requête\n- Données sur 90 jours glissants\n        "
+      summary: Récupérer l'historique des prix pour une paire
+      parameters:
+      - in: query
+        name: date_debut
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de début pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          **Exemples:**
+          - `2024-01-15T00:00:00Z`
+          - `2024-01-15T10:30:00+01:00`
+
+          ⚠️ Doit être utilisé avec `date_fin`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: date_fin
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de fin pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          ⚠️ Doit être utilisé avec `date_debut`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: pair
+        schema:
+          type: string
+        description: 'Paire de trading (ex: XBT/USD, ETH/USD). Note: utilisez XBT
+          pour Bitcoin. Si non fourni, retourne toutes les paires.'
+        examples:
+          Bitcoin:
+            value: XBT/USD
+          Ethereum:
+            value: ETH/USD
+          Solana:
+            value: SOL/USD
+      - in: query
+        name: periode
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 30d
+          - 7d
+          default: 24h
+        description: |-
+          Période de temps pour filtrer les données.
+
+          **Valeurs acceptées:**
+          - `1h` : Dernière heure
+          - `24h` : Dernières 24 heures (défaut)
+          - `7d` : 7 derniers jours
+          - `30d` : 30 derniers jours
+
+          ⚠️ Si `date_debut` et `date_fin` sont fournis, ce paramètre est ignoré.
+        examples:
+          DernièreHeure:
+            value: 1h
+            summary: Dernière heure
+          24Heures:
+            value: 24h
+            summary: 24 heures
+          7Jours:
+            value: 7d
+            summary: 7 jours
+          30Jours:
+            value: 30d
+            summary: 30 jours
+      tags:
+      - Tickers
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TickerHistoryResponse'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/trade/historique/:
+    get:
+      operationId: getTradeHistory
+      description: "\nRetourne l'historique des transactions (trades) pour une paire\
+        \ de trading.\n\n## Description\n\nChaque trade représente une transaction\
+        \ individuelle exécutée sur Kraken.\nLes données incluent le prix, le volume\
+        \ et le côté (achat/vente).\n\n## Utilisation Frontend\n\n```javascript\n\
+        // Récupérer les trades récents\nconst response = await fetch('/api/v1/trade/historique/?pair=XBT/USD&periode=1h');\n\
+        const data = await response.json();\n\n// Calculer le ratio buy/sell\nconst\
+        \ buys = data.data.filter(t => t.side === 'b');\nconst sells = data.data.filter(t\
+        \ => t.side === 's');\nconst ratio = buys.length / sells.length;\n\n// Afficher\
+        \ dans un graphique de volume\ndata.data.forEach(trade => {\n    volumeChart.addBar({\n\
+        \        x: new Date(trade.timestamp),\n        y: trade.volume,\n       \
+        \ color: trade.side === 'b' ? 'green' : 'red'\n    });\n});\n```\n\n## Analyse\
+        \ des trades\n\n| Indicateur | Calcul | Interprétation |\n|------------|--------|----------------|\n\
+        | Buy/Sell Ratio | buys / sells | > 1 = pression acheteuse |\n| Volume moyen\
+        \ | sum(volume) / count | Liquidité |\n| Price Impact | max - min | Volatilité\
+        \ |\n\n## Limites\n\n- Maximum 5000 résultats par requête\n- Données sur 90\
+        \ jours glissants\n        "
+      summary: Récupérer l'historique des transactions
+      parameters:
+      - in: query
+        name: date_debut
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de début pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          **Exemples:**
+          - `2024-01-15T00:00:00Z`
+          - `2024-01-15T10:30:00+01:00`
+
+          ⚠️ Doit être utilisé avec `date_fin`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: date_fin
+        schema:
+          type: string
+          format: date-time
+        description: |-
+          Date de fin pour filtrer les données (format ISO 8601).
+
+          **Format:** `YYYY-MM-DDTHH:MM:SSZ` ou `YYYY-MM-DDTHH:MM:SS+HH:MM`
+
+          ⚠️ Doit être utilisé avec `date_debut`. Si fourni, le paramètre `periode` est ignoré.
+      - in: query
+        name: pair
+        schema:
+          type: string
+        description: 'Paire de trading (ex: XBT/USD, ETH/USD). Si non fourni, retourne
+          toutes les paires.'
+        examples:
+          Bitcoin:
+            value: XBT/USD
+          Ethereum:
+            value: ETH/USD
+      - in: query
+        name: periode
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 30d
+          - 7d
+          default: 24h
+        description: |-
+          Période de temps pour filtrer les données.
+
+          **Valeurs acceptées:**
+          - `1h` : Dernière heure
+          - `24h` : Dernières 24 heures (défaut)
+          - `7d` : 7 derniers jours
+          - `30d` : 30 derniers jours
+
+          ⚠️ Si `date_debut` et `date_fin` sont fournis, ce paramètre est ignoré.
+        examples:
+          DernièreHeure:
+            value: 1h
+            summary: Dernière heure
+          24Heures:
+            value: 24h
+            summary: 24 heures
+          7Jours:
+            value: 7d
+            summary: 7 jours
+          30Jours:
+            value: 30d
+            summary: 30 jours
+      tags:
+      - Trades
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeHistoryResponse'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+components:
+  schemas:
+    AlertData:
+      type: object
+      description: |-
+        Serializer pour les données d'alertes depuis TimescaleDB.
+
+        Les alertes sont générées automatiquement lorsque le prix d'une crypto
+        varie de plus d'un certain seuil (par défaut 1%).
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Horodatage de l'alerte (format ISO 8601 UTC)
+        pair:
+          type: string
+          description: 'Paire de trading concernée (ex: "XBT/USD")'
+          maxLength: 20
+        last_price:
+          type: number
+          format: double
+          description: Prix au moment de l'alerte en USD
+        change_percent:
+          type: number
+          format: double
+          description: Pourcentage de variation (positif = hausse, négatif = baisse)
+        threshold:
+          type: number
+          format: double
+          description: Seuil de déclenchement de l'alerte (en %)
+        alert_type:
+          type: string
+          description: 'Type d''alerte: "PRICE_UP" (hausse) ou "PRICE_DOWN" (baisse)'
+          maxLength: 20
+      required:
+      - alert_type
+      - change_percent
+      - last_price
+      - pair
+      - threshold
+      - timestamp
+    AlertHistoryResponse:
+      type: object
+      description: Serializer pour la réponse de l'endpoint historique alertes.
+      properties:
+        pair:
+          type: string
+          description: Paire de trading filtrée ou "ALL"
+        count:
+          type: integer
+          description: Nombre de résultats retournés
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertData'
+          description: Liste des alertes
+      required:
+      - count
+      - data
+      - pair
+    ArticleData:
+      type: object
+      description: |-
+        Serializer pour les données d'articles depuis TimescaleDB.
+
+        Les articles sont collectés automatiquement depuis des sites crypto spécialisés
+        et analysés pour extraire le sentiment et les cryptos mentionnées.
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Horodatage de collecte de l'article (format ISO 8601 UTC)
+        article_id:
+          type: string
+          description: 'Identifiant unique de l''article (format: source_timestamp)'
+          maxLength: 255
+        title:
+          type: string
+          description: Titre de l'article
+        url:
+          type: string
+          format: uri
+          description: URL complète de l'article source
+        website:
+          type: string
+          description: 'Nom de domaine du site source (ex: "cointelegraph.com")'
+          maxLength: 100
+        summary:
+          type: string
+          description: Résumé ou extrait du contenu de l'article
+        cryptocurrencies_mentioned:
+          type: array
+          items:
+            type: string
+          description: 'Liste des symboles de crypto-monnaies mentionnées (ex: ["BTC",
+            "ETH"])'
+        sentiment_score:
+          type: number
+          format: double
+          description: Score de sentiment de l'article (0.0 à 1.0)
+        sentiment_label:
+          type: string
+          description: 'Label de sentiment: "positive", "negative", ou "neutral"'
+          maxLength: 20
+      required:
+      - article_id
+      - cryptocurrencies_mentioned
+      - sentiment_label
+      - sentiment_score
+      - summary
+      - timestamp
+      - title
+      - url
+      - website
+    ArticleHistoryResponse:
+      type: object
+      description: Serializer pour la réponse de l'endpoint historique articles.
+      properties:
+        crypto_symbol:
+          type: string
+          description: Symbole de la crypto filtrée ou "ALL"
+        count:
+          type: integer
+          description: Nombre de résultats retournés
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleData'
+          description: Liste des articles
+      required:
+      - count
+      - crypto_symbol
+      - data
+    CryptoConfiguration:
+      type: object
+      description: |-
+        Serializer pour la configuration des crypto-monnaies suivies.
+
+        Permet de gérer la liste des crypto-monnaies actives dans le système.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        symbol:
+          type: string
+          description: 'Symbole de la crypto-monnaie (ex: BTC, ETH, SOL)'
+          maxLength: 50
+        name:
+          type: string
+          description: 'Nom complet de la crypto-monnaie (ex: Bitcoin, Ethereum)'
+          maxLength: 100
+        is_active:
+          type: boolean
+          description: Indique si la crypto est activement suivie
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - name
+      - symbol
+    CryptoConfigurationRequest:
+      type: object
+      description: |-
+        Serializer pour la configuration des crypto-monnaies suivies.
+
+        Permet de gérer la liste des crypto-monnaies actives dans le système.
+      properties:
+        symbol:
+          type: string
+          minLength: 1
+          description: 'Symbole de la crypto-monnaie (ex: BTC, ETH, SOL)'
+          maxLength: 50
+        name:
+          type: string
+          minLength: 1
+          description: 'Nom complet de la crypto-monnaie (ex: Bitcoin, Ethereum)'
+          maxLength: 100
+        is_active:
+          type: boolean
+          description: Indique si la crypto est activement suivie
+      required:
+      - name
+      - symbol
+    ErrorResponse:
+      type: object
+      description: Serializer pour les réponses d'erreur.
+      properties:
+        error:
+          type: string
+          description: Message d'erreur détaillé
+      required:
+      - error
+    HealthCheckResponse:
+      type: object
+      description: Serializer pour la réponse du health check.
+      properties:
+        status:
+          type: string
+          description: 'État du service: "healthy" ou "unhealthy"'
+        service:
+          type: string
+          description: Nom du service
+        version:
+          type: string
+          description: Version de l'API
+      required:
+      - service
+      - status
+      - version
+    PaginatedCryptoConfigurationList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CryptoConfiguration'
+    PaginatedVisualizationParameterList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisualizationParameter'
+    PatchedCryptoConfigurationRequest:
+      type: object
+      description: |-
+        Serializer pour la configuration des crypto-monnaies suivies.
+
+        Permet de gérer la liste des crypto-monnaies actives dans le système.
+      properties:
+        symbol:
+          type: string
+          minLength: 1
+          description: 'Symbole de la crypto-monnaie (ex: BTC, ETH, SOL)'
+          maxLength: 50
+        name:
+          type: string
+          minLength: 1
+          description: 'Nom complet de la crypto-monnaie (ex: Bitcoin, Ethereum)'
+          maxLength: 100
+        is_active:
+          type: boolean
+          description: Indique si la crypto est activement suivie
+    PatchedVisualizationParameterRequest:
+      type: object
+      description: |-
+        Serializer pour les paramètres de visualisation sauvegardés.
+
+        Permet aux utilisateurs de sauvegarder leurs configurations de graphiques
+        préférées pour un accès rapide.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: 'Nom de la configuration (ex: "Mon Dashboard BTC")'
+          maxLength: 100
+        crypto_symbol:
+          type: string
+          minLength: 1
+          description: 'Symbole de la crypto associée (ex: BTC, ETH)'
+          maxLength: 50
+        time_range:
+          type: string
+          minLength: 1
+          description: 'Plage temporelle (valeurs: 1h, 24h, 7d, 30d)'
+          maxLength: 20
+        chart_type:
+          type: string
+          minLength: 1
+          description: 'Type de graphique (valeurs: candlestick, line, area, bar)'
+          maxLength: 50
+        indicators:
+          description: 'Liste des indicateurs techniques (ex: ["SMA_20", "RSI", "MACD"])'
+    PredictionData:
+      type: object
+      description: |-
+        Serializer pour les données de prédiction de prix depuis TimescaleDB.
+
+        Les prédictions sont générées par des modèles ML (actuellement moyenne mobile).
+        Inclut des intervalles de confiance pour évaluer l'incertitude.
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Horodatage de la prédiction (format ISO 8601 UTC)
+        crypto_symbol:
+          type: string
+          description: 'Symbole de la crypto-monnaie (ex: BTC, ETH)'
+          maxLength: 10
+        predicted_price:
+          type: number
+          format: double
+          description: Prix prédit en USD
+        actual_price:
+          type: number
+          format: double
+          nullable: true
+          description: Prix réel observé en USD (disponible après coup pour comparaison)
+        model_name:
+          type: string
+          description: 'Nom du modèle utilisé (ex: "moving_average", "lstm", "arima")'
+          maxLength: 50
+        confidence_interval_low:
+          type: number
+          format: double
+          description: Borne inférieure de l'intervalle de confiance en USD
+        confidence_interval_high:
+          type: number
+          format: double
+          description: Borne supérieure de l'intervalle de confiance en USD
+      required:
+      - confidence_interval_high
+      - confidence_interval_low
+      - crypto_symbol
+      - model_name
+      - predicted_price
+      - timestamp
+    PredictionHistoryResponse:
+      type: object
+      description: Serializer pour la réponse de l'endpoint historique prédictions.
+      properties:
+        crypto_symbol:
+          type: string
+          description: Symbole de la crypto demandée
+        count:
+          type: integer
+          description: Nombre de résultats retournés
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PredictionData'
+          description: Liste des prédictions
+      required:
+      - count
+      - crypto_symbol
+      - data
+    SentimentData:
+      type: object
+      description: |-
+        Serializer pour les données de sentiment depuis TimescaleDB.
+
+        Le sentiment est calculé à partir de l'analyse NLP des articles de presse crypto.
+        Les scores vont de 0.0 (très négatif) à 1.0 (très positif).
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Horodatage de la mesure de sentiment (format ISO 8601 UTC)
+        crypto_symbol:
+          type: string
+          description: 'Symbole de la crypto-monnaie (ex: BTC, ETH, SOL)'
+          maxLength: 50
+        sentiment_score:
+          type: number
+          format: double
+          description: Score de sentiment entre 0.0 (négatif) et 1.0 (positif)
+        sentiment_label:
+          type: string
+          description: 'Label de sentiment: "positive", "negative", ou "neutral"'
+          maxLength: 20
+        source:
+          type: string
+          description: 'Source des données (ex: "aggregated_articles", "twitter")'
+          maxLength: 100
+        confidence:
+          type: number
+          format: double
+          description: Niveau de confiance de l'analyse (0.0 à 1.0)
+      required:
+      - confidence
+      - crypto_symbol
+      - sentiment_label
+      - sentiment_score
+      - source
+      - timestamp
+    SentimentHistoryResponse:
+      type: object
+      description: Serializer pour la réponse de l'endpoint historique sentiment.
+      properties:
+        crypto_symbol:
+          type: string
+          description: Symbole de la crypto demandée
+        count:
+          type: integer
+          description: Nombre de résultats retournés
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SentimentData'
+          description: Liste des données de sentiment
+      required:
+      - count
+      - crypto_symbol
+      - data
+    TickerData:
+      type: object
+      description: |-
+        Serializer pour les données de ticker (prix temps réel) depuis TimescaleDB.
+
+        Les tickers représentent l'état actuel du marché pour une paire de trading.
+        Les données proviennent de l'API Kraken en temps réel.
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Horodatage du ticker (format ISO 8601 UTC)
+        pair:
+          type: string
+          description: 'Paire de trading (ex: "XBT/USD", "ETH/USD"). Note: Kraken
+            utilise XBT pour Bitcoin'
+          maxLength: 20
+        last:
+          type: number
+          format: double
+          description: Dernier prix de transaction en USD
+        bid:
+          type: number
+          format: double
+          description: Meilleure offre d'achat (prix que les acheteurs sont prêts
+            à payer)
+        ask:
+          type: number
+          format: double
+          description: Meilleure offre de vente (prix que les vendeurs demandent)
+        volume_24h:
+          type: number
+          format: double
+          description: Volume total échangé sur les dernières 24 heures (en crypto)
+      required:
+      - ask
+      - bid
+      - last
+      - pair
+      - timestamp
+      - volume_24h
+    TickerHistoryResponse:
+      type: object
+      description: Serializer pour la réponse de l'endpoint historique tickers.
+      properties:
+        pair:
+          type: string
+          description: Paire de trading demandée
+        count:
+          type: integer
+          description: Nombre de résultats retournés
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TickerData'
+          description: Liste des données de ticker
+      required:
+      - count
+      - data
+      - pair
+    TradeData:
+      type: object
+      description: |-
+        Serializer pour les données de trade (transactions) depuis TimescaleDB.
+
+        Chaque trade représente une transaction individuelle exécutée sur le marché.
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Horodatage de la transaction (format ISO 8601 UTC)
+        pair:
+          type: string
+          description: 'Paire de trading (ex: "XBT/USD", "ETH/USD")'
+          maxLength: 20
+        price:
+          type: number
+          format: double
+          description: Prix de la transaction en USD
+        volume:
+          type: number
+          format: double
+          description: Volume échangé (quantité de crypto)
+        side:
+          type: string
+          description: 'Côté de la transaction: "b" = buy (achat), "s" = sell (vente)'
+          maxLength: 1
+      required:
+      - pair
+      - price
+      - side
+      - timestamp
+      - volume
+    TradeHistoryResponse:
+      type: object
+      description: Serializer pour la réponse de l'endpoint historique trades.
+      properties:
+        pair:
+          type: string
+          description: Paire de trading demandée
+        count:
+          type: integer
+          description: Nombre de résultats retournés
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeData'
+          description: Liste des transactions
+      required:
+      - count
+      - data
+      - pair
+    VisualizationParameter:
+      type: object
+      description: |-
+        Serializer pour les paramètres de visualisation sauvegardés.
+
+        Permet aux utilisateurs de sauvegarder leurs configurations de graphiques
+        préférées pour un accès rapide.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: 'Nom de la configuration (ex: "Mon Dashboard BTC")'
+          maxLength: 100
+        crypto_symbol:
+          type: string
+          description: 'Symbole de la crypto associée (ex: BTC, ETH)'
+          maxLength: 50
+        time_range:
+          type: string
+          description: 'Plage temporelle (valeurs: 1h, 24h, 7d, 30d)'
+          maxLength: 20
+        chart_type:
+          type: string
+          description: 'Type de graphique (valeurs: candlestick, line, area, bar)'
+          maxLength: 50
+        indicators:
+          description: 'Liste des indicateurs techniques (ex: ["SMA_20", "RSI", "MACD"])'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - chart_type
+      - crypto_symbol
+      - name
+      - time_range
+    VisualizationParameterRequest:
+      type: object
+      description: |-
+        Serializer pour les paramètres de visualisation sauvegardés.
+
+        Permet aux utilisateurs de sauvegarder leurs configurations de graphiques
+        préférées pour un accès rapide.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: 'Nom de la configuration (ex: "Mon Dashboard BTC")'
+          maxLength: 100
+        crypto_symbol:
+          type: string
+          minLength: 1
+          description: 'Symbole de la crypto associée (ex: BTC, ETH)'
+          maxLength: 50
+        time_range:
+          type: string
+          minLength: 1
+          description: 'Plage temporelle (valeurs: 1h, 24h, 7d, 30d)'
+          maxLength: 20
+        chart_type:
+          type: string
+          minLength: 1
+          description: 'Type de graphique (valeurs: candlestick, line, area, bar)'
+          maxLength: 50
+        indicators:
+          description: 'Liste des indicateurs techniques (ex: ["SMA_20", "RSI", "MACD"])'
+      required:
+      - chart_type
+      - crypto_symbol
+      - name
+      - time_range
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+servers:
+- url: http://localhost:8000
+  description: Serveur API
+- url: http://192.168.218.62:8000
+  description: Serveur réseau local (accès depuis autres machines)
+- url: http://localhost:8000
+  description: Serveur de développement local
+- url: http://127.0.0.1:8000
+  description: Serveur local alternatif
+tags:
+- name: Health
+  description: Endpoints de vérification de santé du service
+- name: Sentiment
+  description: "\n**Analyse de Sentiment des Crypto-monnaies**\n\nCes endpoints fournissent\
+    \ l'historique du sentiment pour chaque crypto-monnaie.\nLe sentiment est calculé\
+    \ à partir de l'analyse des articles de presse crypto.\n\n**Score de sentiment:**\n\
+    - `0.0 - 0.4`: Négatif \U0001F61F\n- `0.4 - 0.6`: Neutre \U0001F610\n- `0.6 -\
+    \ 1.0`: Positif \U0001F60A\n            "
+- name: Predictions
+  description: "\n**Prédictions de Prix**\n\nCes endpoints fournissent les prédictions\
+    \ de prix générées par nos modèles ML.\n\n**Modèles disponibles:**\n- `moving_average`:\
+    \ Moyenne mobile simple avec intervalles de confiance\n\n**Données retournées:**\n\
+    - Prix prédit\n- Intervalles de confiance (bas/haut)\n- Prix réel (si disponible\
+    \ pour comparaison)\n            "
+- name: Tickers
+  description: "\n**Prix en Temps Réel (Tickers)**\n\nHistorique des prix pour les\
+    \ paires de trading crypto/USD.\n\n**Paires supportées:**\n- BTC/USD, ETH/USD,\
+    \ SOL/USD, ADA/USD\n- MATIC/USD, DOT/USD, LINK/USD, USDT/USD\n\n**Données retournées:**\n\
+    - `last`: Dernier prix\n- `bid`: Meilleure offre d'achat\n- `ask`: Meilleure offre\
+    \ de vente\n- `volume_24h`: Volume sur 24h\n            "
+- name: Trades
+  description: "\n**Historique des Transactions**\n\nChaque transaction individuelle\
+    \ d'achat ou de vente.\n\n**Données retournées:**\n- `price`: Prix de la transaction\n\
+    - `volume`: Volume échangé\n- `side`: `b` (buy/achat) ou `s` (sell/vente)\n  \
+    \          "
+- name: Articles
+  description: "\n**Articles Crypto avec Analyse de Sentiment**\n\nArticles de presse\
+    \ crypto collectés et analysés automatiquement.\n\n**Sources:**\n- CoinTelegraph,\
+    \ CoinDesk, et autres sites spécialisés\n\n**Données retournées:**\n- Titre et\
+    \ URL de l'article\n- Résumé du contenu\n- Crypto-monnaies mentionnées\n- Score\
+    \ et label de sentiment\n            "
+- name: Alerts
+  description: "\n**Alertes de Variation de Prix**\n\nAlertes générées automatiquement\
+    \ lors de variations significatives de prix.\n\n**Types d'alertes:**\n- `PRICE_UP`:\
+    \ Hausse significative (> seuil)\n- `PRICE_DOWN`: Baisse significative (> seuil)\n\
+    \n**Seuil par défaut:** 1% de variation\n            "
+- name: Configuration
+  description: "\n**Configuration Utilisateur**\n\nGestion des crypto-monnaies suivies\
+    \ et des paramètres de visualisation.\n\n**Fonctionnalités:**\n- Ajouter/supprimer\
+    \ des cryptos à suivre\n- Sauvegarder des configurations de graphiques\n- Personnaliser\
+    \ les indicateurs techniques\n            "
+externalDocs:
+  description: Documentation complète du projet
+  url: https://github.com/cryptoviz/docs
