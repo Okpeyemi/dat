@@ -65,17 +65,24 @@ export default function DashboardPage() {
             setCryptos(cryptoRes.results);
             setVisualizations(vizRes.results);
 
-            // Get sentiment for first active crypto
-            const firstCrypto = cryptoRes.results.find((c) => c.is_active);
-            if (firstCrypto) {
-                const symbol = firstCrypto.symbol.includes('/')
-                    ? firstCrypto.symbol.split('/')[0]
-                    : firstCrypto.symbol;
-                const sentimentRes = await getSentimentHistory(symbol, {
-                    periode: '24h',
-                });
-                setSentiments(sentimentRes.data.slice(0, 5));
-            }
+            // Get sentiment for all active cryptos
+            const activeCryptos = cryptoRes.results.filter((c) => c.is_active);
+
+            const sentimentPromises = activeCryptos.map(async (crypto) => {
+                const symbol = crypto.symbol.includes('/')
+                    ? crypto.symbol.split('/')[0]
+                    : crypto.symbol;
+                try {
+                    const res = await getSentimentHistory(symbol, { periode: '24h' });
+                    // Return the latest sentiment data point if available
+                    return res.data[0];
+                } catch (e) {
+                    return null;
+                }
+            });
+
+            const sentimentResults = await Promise.all(sentimentPromises);
+            setSentiments(sentimentResults.filter((s): s is SentimentData => s !== null && s !== undefined));
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Erreur de chargement');
         } finally {

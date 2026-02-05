@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, TrendingUpIcon, ListIcon, ChartBarIcon } from '@/components';
+import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, TrendingUpIcon, ListIcon, ChartBarIcon, SimpleChart } from '@/components';
 import { getTickerHistory, getCryptoConfigs } from '@/lib/api';
 import type { TickerData } from '@/lib/types';
 import type { Period } from '@/lib/config';
@@ -115,12 +115,19 @@ export default function PrixPage() {
 
                         {/* Price Chart Placeholder */}
                         <Card title="Évolution du prix" icon={<TrendingUpIcon size={24} />} subtitle={`${pair} - ${period}`}>
-                            <div className="h-64 flex items-center justify-center border border-dashed border-[var(--border-color)] rounded-lg">
-                                <div className="text-center text-[var(--foreground-muted)]">
-                                    <span className="block mb-2"><ChartBarIcon size={40} /></span>
-                                    <p>Graphique de prix</p>
-                                    <p className="text-sm">{tickers.length} points de données</p>
-                                </div>
+                            <div className="h-64 flex items-center justify-center p-4">
+                                {tickers.length > 0 ? (
+                                    <SimpleChart
+                                        data={tickers}
+                                        type="candlestick"
+                                        height={250}
+                                        showAxes={true}
+                                    />
+                                ) : (
+                                    <div className="text-center text-[var(--foreground-muted)]">
+                                        <p>Aucune donnée pour ce graphique</p>
+                                    </div>
+                                )}
                             </div>
                         </Card>
 
