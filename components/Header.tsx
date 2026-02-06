@@ -34,7 +34,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
     }, []);
 
     return (
-        <header className="sticky top-0 z-40 bg-[var(--background)]/80 backdrop-blur-lg border-b border-[var(--border-color)] px-8 py-4">
+        <header className="sticky top-0 z-40 bg-background/50 backdrop-blur-xl border-b border-sidebar-border px-8 py-4">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-xl font-bold text-[var(--foreground)]">{title}</h1>

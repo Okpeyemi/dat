@@ -63,7 +63,7 @@ export default function CryptoSelector({
                 <SelectValue placeholder="Sélectionner actif" />
             </SelectTrigger>
             <SelectContent>
-                {showAll && <SelectItem value="">Toutes les cryptos</SelectItem>}
+                {showAll && <SelectItem value="all">Toutes les cryptos</SelectItem>}
                 {cryptos.map((crypto) => {
                     const val = getValue(crypto.symbol);
                     return (

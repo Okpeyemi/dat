@@ -179,7 +179,7 @@ export interface AlertHistoryResponse {
 
 // Query Parameters
 export interface HistoryQueryParams {
-    periode?: '1m' | '5m' | '30m' | '1h' | '24h' | '7d' | '30d';
+    periode?: 'live' | '1m' | '5m' | '30m' | '1h' | '24h' | '7d' | '30d';
     date_debut?: string;
     date_fin?: string;
     pair?: string;

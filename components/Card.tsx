@@ -27,7 +27,7 @@ export default function Card({
     headerAction,
 }: CardProps) {
     return (
-        <ShadcnCard className={`overflow-hidden card-hover animate-fade-in ${className}`}>
+        <ShadcnCard className={`overflow-hidden py-8 card-hover animate-fade-in ${className}`}>
             {(title || headerAction) && (
                 <CardHeader>
                     {headerAction && <CardAction>{headerAction}</CardAction>}

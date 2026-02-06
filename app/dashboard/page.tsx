@@ -146,7 +146,7 @@ export default function DashboardPage() {
                 ) : (
                     <>
                         {/* Stats Overview */}
-                        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             <StatCard
                                 label="Cryptos suivies"
                                 value={cryptos.filter((c) => c.is_active).length}
@@ -172,14 +172,14 @@ export default function DashboardPage() {
                         {/* Custom Visualizations Grid */}
                         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Predictions Chart */}
-                            <Card title="Prédictions (BTC)" icon={<TrendingUpIcon size={24} />}>
+                            <Card title="Prédictions" icon={<TrendingUpIcon size={24} />}>
                                 <div className="mt-4">
                                     {predictions.length > 0 ? (
                                         <GenericChart
                                             data={predictions}
                                             xKey="timestamp"
                                             series={[
-                                                { key: 'predicted_price', label: 'Prédit', color: 'var(--accent-primary)', type: 'line' },
+                                                { key: 'predicted_price', label: 'Prédit', color: 'var(--accent-primary)', type: 'area' },
                                                 { key: 'actual_price', label: 'Réel', color: 'var(--accent-success)', type: 'line' },
                                             ]}
                                             formatY={(v) => `$${v.toLocaleString()}`}
@@ -216,7 +216,7 @@ export default function DashboardPage() {
                         </section>
 
                         {/* Main Content Grid */}
-                        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* Latest Prices */}
                             <Card title="Prix en temps réel" icon={<WalletIcon size={24} />} subtitle="Derniers prix enregistrés">
                                 <div className="space-y-3">
@@ -302,7 +302,7 @@ export default function DashboardPage() {
                         </section>
 
                         {/* Sentiment & Cryptos */}
-                        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* Sentiment Overview */}
                             <Card title="Analyse de sentiment" icon={<MaskIcon size={24} />} subtitle="Sentiment récent du marché">
                                 <div className="space-y-3">

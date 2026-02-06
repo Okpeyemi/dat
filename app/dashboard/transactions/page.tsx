@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import Header from '@/components/Header';
 import Card from '@/components/Card';
 import PeriodSelector from '@/components/PeriodSelector';
-import CryptoSelector from '@/components/CryptoSelector';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorDisplay from '@/components/ErrorDisplay';
 import { GenericChart } from '@/components/GenericChart';
@@ -12,6 +11,7 @@ import { ScaleIcon, ListIcon, RefreshCwIcon } from '@/components/Icons';
 import { getTradeHistory, getCryptoConfigs } from '@/lib/api';
 import type { TradeData } from '@/lib/types';
 import type { Period } from '@/lib/config';
+import CryptoSelector from '@/components/CryptoSelector';
 
 export default function TransactionsPage() {
     const [loading, setLoading] = useState(true);
@@ -62,10 +62,11 @@ export default function TransactionsPage() {
     }, [loadData, initialized, pair]);
 
     // Calculate stats
-    const buys = trades.filter((t) => t.side === 'b');
-    const sells = trades.filter((t) => t.side === 's');
-    const totalVolume = trades.reduce((sum, t) => sum + t.volume, 0);
-    const buyRatio = trades.length > 0 ? (buys.length / trades.length) * 100 : 0;
+    const safeTrades = Array.isArray(trades) ? trades : [];
+    const buys = safeTrades.filter((t) => t.side === 'b');
+    const sells = safeTrades.filter((t) => t.side === 's');
+    const totalVolume = safeTrades.reduce((sum, t) => sum + t.volume, 0);
+    const buyRatio = safeTrades.length > 0 ? (buys.length / safeTrades.length) * 100 : 0;
 
     return (
         <>
@@ -106,7 +107,7 @@ export default function TransactionsPage() {
                                         xKey="timestamp"
                                         series={[
                                             { key: 'price', label: 'Prix Exécuté', color: 'var(--accent-success)', type: 'line' },
-                                            // { key: 'volume', label: 'Volume', color: 'var(--foreground-muted)', type: 'bar' }
+                                            { key: 'volume', label: 'Volume', color: 'var(--foreground-muted)', type: 'bar' }
                                         ]}
                                         formatY={(v) => `$${v.toLocaleString()}`}
                                         height={300}

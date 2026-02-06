@@ -29,9 +29,9 @@ export default function Sidebar() {
     const pathname = usePathname();
 
     return (
-        <aside className="fixed left-0 top-0 h-screen w-64 bg-[var(--background-secondary)] border-r border-[var(--border-color)] flex flex-col z-50">
+        <aside className="fixed left-0 top-0 h-screen w-64 bg-background/50 backdrop-blur-xl border-r border-sidebar-border flex flex-col z-50">
             {/* Logo */}
-            <div className="p-4 border-b border-[var(--border-color)]">
+            <div className="p-4 border-b border-sidebar-border/50">
                 <h1 className="text-xl font-bold gradient-text flex items-center gap-2">
                     <DiamondIcon size={24} className="text-[var(--accent-primary)]" />
                     CRYPTO VIZ

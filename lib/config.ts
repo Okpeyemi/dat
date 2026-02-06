@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = 'http://192.168.218.62:8000';
+export const API_BASE_URL = 'http://10.50.4.81:8000';
 
 export const ENDPOINTS = {
     health: '/api/v1/health/',
