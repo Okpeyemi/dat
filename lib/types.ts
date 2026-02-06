@@ -132,8 +132,8 @@ export interface PredictionData {
     predicted_price: number;
     actual_price: number | null;
     model_name: string;
-    confidence_interval_low: number;
-    confidence_interval_high: number;
+    confidence_interval_low: number | null;
+    confidence_interval_high: number | null;
 }
 
 export interface PredictionHistoryResponse {
@@ -179,7 +179,7 @@ export interface AlertHistoryResponse {
 
 // Query Parameters
 export interface HistoryQueryParams {
-    periode?: '1h' | '24h' | '7d' | '30d';
+    periode?: '1m' | '5m' | '30m' | '1h' | '24h' | '7d' | '30d';
     date_debut?: string;
     date_fin?: string;
     pair?: string;

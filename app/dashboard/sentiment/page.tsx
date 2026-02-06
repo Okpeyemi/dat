@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, ChartBarIcon, ListIcon } from '@/components';
+import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, ChartBarIcon, ListIcon, GenericChart, RefreshCwIcon } from '@/components';
 import { getSentimentHistory, getCryptoConfigs } from '@/lib/api';
 import type { SentimentData } from '@/lib/types';
 import type { Period } from '@/lib/config';
@@ -97,6 +97,13 @@ export default function SentimentPage() {
                         <CryptoSelector value={symbol} onChange={setSymbol} mode="symbol" />
                     </div>
                     <PeriodSelector value={period} onChange={setPeriod} />
+                    <button
+                        onClick={loadData}
+                        className="p-2 bg-[var(--background-secondary)] rounded-lg hover:bg-[var(--background-card)] transition-colors text-[var(--foreground)]"
+                        title="Rafraîchir les données"
+                    >
+                        <RefreshCwIcon size={20} />
+                    </button>
                 </div>
 
                 {loading ? (
@@ -105,6 +112,24 @@ export default function SentimentPage() {
                     <ErrorDisplay message={error} retry={loadData} />
                 ) : (
                     <>
+                        {/* Sentiment Trend Chart */}
+                        {sentiments.length > 0 && (
+                            <Card title="Tendance du Sentiment" icon={<ChartBarIcon size={24} />}>
+                                <div className="mt-4">
+                                    <GenericChart
+                                        data={sentiments}
+                                        xKey="timestamp"
+                                        series={[
+                                            { key: 'sentiment_score', label: 'Score (-1 à 1)', color: 'var(--accent-primary)', type: 'line' },
+                                            { key: 'confidence', label: 'Confiance', color: 'var(--foreground-muted)', type: 'area' }
+                                        ]}
+                                        formatY={(v) => `${(v * 100).toFixed(0)}%`}
+                                        height={300}
+                                    />
+                                </div>
+                            </Card>
+                        )}
+
                         {/* Sentiment Stats */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="bg-[var(--background-card)] border border-[var(--border-color)] rounded-xl p-5">

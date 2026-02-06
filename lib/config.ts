@@ -15,7 +15,7 @@ export const ENDPOINTS = {
     alert: '/api/v1/alert/historique/',
 } as const;
 
-export const PERIODS = ['1h', '24h', '7d', '30d'] as const;
+export const PERIODS = ['1m', '5m', '30m', '1h', '24h', '7d', '30d'] as const;
 export type Period = typeof PERIODS[number];
 
 // Mapping between crypto symbols and trading pairs

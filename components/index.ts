@@ -10,3 +10,4 @@ export * from './Icons';
 export { VisualizationManager } from './VisualizationManager';
 export { SimpleChart } from './SimpleChart';
 export { VisualizationWidget } from './VisualizationWidget';
+export * from './GenericChart';

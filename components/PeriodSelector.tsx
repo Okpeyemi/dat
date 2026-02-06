@@ -8,6 +8,9 @@ interface PeriodSelectorProps {
 }
 
 const periodLabels: Record<Period, string> = {
+    '1m': '1 minute',
+    '5m': '5 minutes',
+    '30m': '30 minutes',
     '1h': '1 heure',
     '24h': '24 heures',
     '7d': '7 jours',

@@ -68,24 +68,16 @@ export function VisualizationWidget({ config }: WidgetProps) {
                 if (Array.isArray(config.indicators)) {
                     indicators = config.indicators;
                 } else if (typeof config.indicators === 'string') {
-                    const str = (config.indicators as string).trim();
                     try {
                         // Try parsing if it looks like JSON array
-                        if (str.startsWith('[') && str.endsWith(']')) {
-                            // Replace single quotes with double quotes just in case, though risky if content has quotes
-                            // Better to just try parse
-                            indicators = JSON.parse(str);
+                        if ((config.indicators as string).startsWith('[')) {
+                            indicators = JSON.parse(config.indicators);
                         } else {
                             // Or split by comma if simple string
-                            indicators = str.split(',').map(s => s.trim()).filter(Boolean);
+                            indicators = (config.indicators as string).split(',').map(s => s.trim());
                         }
                     } catch (e) {
-                        // Fallback: split by comma if JSON parse failed but it might be just a comma list
-                        indicators = str.split(',').map(s => s.trim()).filter(Boolean);
-                        // If that results in just the original string and it wasn't valid, maybe just show it
-                        if (indicators.length === 1 && indicators[0] === str && (str.startsWith('[') || str.includes('{'))) {
-                            // Probably failed JSON, show empty or raw? Show raw as single tag to be safe
-                        }
+                        indicators = [config.indicators];
                     }
                 }
 

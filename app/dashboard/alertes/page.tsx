@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, ChartBarIcon, BellIcon, TrendingUpIcon, TrendingDownIcon } from '@/components';
+import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, ChartBarIcon, BellIcon, TrendingUpIcon, TrendingDownIcon, RefreshCwIcon } from '@/components';
 import { getAlertHistory } from '@/lib/api';
 import type { AlertData } from '@/lib/types';
 import type { Period } from '@/lib/config';
@@ -58,6 +58,13 @@ export default function AlertesPage() {
                         <CryptoSelector value={pair} onChange={setPair} mode="pair" showAll />
                     </div>
                     <PeriodSelector value={period} onChange={setPeriod} />
+                    <button
+                        onClick={loadData}
+                        className="p-2 bg-[var(--background-secondary)] rounded-lg hover:bg-[var(--background-card)] transition-colors text-[var(--foreground)]"
+                        title="Rafraîchir les données"
+                    >
+                        <RefreshCwIcon size={20} />
+                    </button>
                 </div>
 
                 {loading ? (

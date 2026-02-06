@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, TrendingUpIcon, ListIcon, ChartBarIcon, SimpleChart } from '@/components';
+import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, TrendingUpIcon, ListIcon, ChartBarIcon, SimpleChart, RefreshCwIcon } from '@/components';
 import { getTickerHistory, getCryptoConfigs } from '@/lib/api';
 import type { TickerData } from '@/lib/types';
 import type { Period } from '@/lib/config';
@@ -77,6 +77,13 @@ export default function PrixPage() {
                         <CryptoSelector value={pair} onChange={setPair} mode="pair" />
                     </div>
                     <PeriodSelector value={period} onChange={setPeriod} />
+                    <button
+                        onClick={loadData}
+                        className="p-2 bg-[var(--background-secondary)] rounded-lg hover:bg-[var(--background-card)] transition-colors text-[var(--foreground)]"
+                        title="Rafraîchir les données"
+                    >
+                        <RefreshCwIcon size={20} />
+                    </button>
                 </div>
 
                 {loading ? (

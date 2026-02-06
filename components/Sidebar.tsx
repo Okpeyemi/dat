@@ -31,12 +31,11 @@ export default function Sidebar() {
     return (
         <aside className="fixed left-0 top-0 h-screen w-64 bg-[var(--background-secondary)] border-r border-[var(--border-color)] flex flex-col z-50">
             {/* Logo */}
-            <div className="p-6 border-b border-[var(--border-color)]">
+            <div className="p-4 border-b border-[var(--border-color)]">
                 <h1 className="text-xl font-bold gradient-text flex items-center gap-2">
                     <DiamondIcon size={24} className="text-[var(--accent-primary)]" />
                     CRYPTO VIZ
                 </h1>
-                <p className="text-xs text-[var(--foreground-muted)] mt-1">Dashboard en temps réel</p>
             </div>
 
             {/* Navigation */}

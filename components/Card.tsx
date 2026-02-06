@@ -50,11 +50,10 @@ interface StatCardProps {
     value: string | number;
     change?: number;
     icon?: ReactNode;
-    subValue?: ReactNode; // New prop for extra context
     loading?: boolean;
 }
 
-export function StatCard({ label, value, change, icon, subValue, loading }: StatCardProps) {
+export function StatCard({ label, value, change, icon, loading }: StatCardProps) {
     return (
         <div className="bg-[var(--background-card)] border border-[var(--border-color)] rounded-xl p-6 card-hover animate-fade-in">
             <div className="flex items-start justify-between">
@@ -73,11 +72,6 @@ export function StatCard({ label, value, change, icon, subValue, loading }: Stat
                             <span>{change >= 0 ? '↑' : '↓'}</span>
                             <span>{Math.abs(change).toFixed(2)}%</span>
                         </p>
-                    )}
-                    {subValue && !loading && (
-                        <div className="mt-2 text-xs text-[var(--foreground-muted)] opacity-80">
-                            {subValue}
-                        </div>
                     )}
                 </div>
                 {icon && <span className="text-[var(--accent-primary)] opacity-60">{icon}</span>}

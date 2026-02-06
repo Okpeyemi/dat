@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, ScaleIcon, ListIcon } from '@/components';
+import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, ScaleIcon, ListIcon, GenericChart, RefreshCwIcon } from '@/components';
 import { getTradeHistory, getCryptoConfigs } from '@/lib/api';
 import type { TradeData } from '@/lib/types';
 import type { Period } from '@/lib/config';
@@ -75,6 +75,13 @@ export default function TransactionsPage() {
                         <CryptoSelector value={pair} onChange={setPair} mode="pair" />
                     </div>
                     <PeriodSelector value={period} onChange={setPeriod} />
+                    <button
+                        onClick={loadData}
+                        className="p-2 bg-[var(--background-secondary)] rounded-lg hover:bg-[var(--background-card)] transition-colors text-[var(--foreground)]"
+                        title="Rafraîchir les données"
+                    >
+                        <RefreshCwIcon size={20} />
+                    </button>
                 </div>
 
                 {loading ? (
@@ -83,6 +90,24 @@ export default function TransactionsPage() {
                     <ErrorDisplay message={error} retry={loadData} />
                 ) : (
                     <>
+                        {/* Trade History Chart */}
+                        {trades.length > 0 && (
+                            <Card title="Historique des Prix" icon={<ScaleIcon size={24} />}>
+                                <div className="mt-4">
+                                    <GenericChart
+                                        data={trades}
+                                        xKey="timestamp"
+                                        series={[
+                                            { key: 'price', label: 'Prix Exécuté', color: 'var(--accent-success)', type: 'line' },
+                                            // { key: 'volume', label: 'Volume', color: 'var(--foreground-muted)', type: 'bar' }
+                                        ]}
+                                        formatY={(v) => `$${v.toLocaleString()}`}
+                                        height={300}
+                                    />
+                                </div>
+                            </Card>
+                        )}
+
                         {/* Trade Stats */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="bg-[var(--background-card)] border border-[var(--border-color)] rounded-xl p-5">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, CrystalBallIcon, ListIcon } from '@/components';
+import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, CrystalBallIcon, ListIcon, GenericChart, RefreshCwIcon } from '@/components';
 import { getPredictionHistory, getCryptoConfigs } from '@/lib/api';
 import type { PredictionData } from '@/lib/types';
 import type { Period } from '@/lib/config';
@@ -83,6 +83,13 @@ export default function PredictionsPage() {
                         <CryptoSelector value={symbol} onChange={setSymbol} mode="symbol" />
                     </div>
                     <PeriodSelector value={period} onChange={setPeriod} />
+                    <button
+                        onClick={loadData}
+                        className="p-2 bg-[var(--background-secondary)] rounded-lg hover:bg-[var(--background-card)] transition-colors text-[var(--foreground)]"
+                        title="Rafraîchir les données"
+                    >
+                        <RefreshCwIcon size={20} />
+                    </button>
                 </div>
 
                 {loading ? (
@@ -104,15 +111,38 @@ export default function PredictionsPage() {
                                     <div className="text-center p-6 bg-[var(--background-secondary)] rounded-xl">
                                         <p className="text-sm text-[var(--foreground-muted)] mb-2">Intervalle bas</p>
                                         <p className="text-2xl font-bold text-[var(--accent-danger)]">
-                                            ${latestPrediction.confidence_interval_low.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                            {latestPrediction.confidence_interval_low !== null
+                                                ? `$${latestPrediction.confidence_interval_low.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                                                : 'N/A'}
                                         </p>
                                     </div>
                                     <div className="text-center p-6 bg-[var(--background-secondary)] rounded-xl">
                                         <p className="text-sm text-[var(--foreground-muted)] mb-2">Intervalle haut</p>
                                         <p className="text-2xl font-bold text-[var(--accent-success)]">
-                                            ${latestPrediction.confidence_interval_high.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                            {latestPrediction.confidence_interval_high !== null
+                                                ? `$${latestPrediction.confidence_interval_high.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                                                : 'N/A'}
                                         </p>
                                     </div>
+                                </div>
+                            </Card>
+                        )}
+
+                        {/* Prediction vs Actual Chart */}
+                        {predictions.length > 0 && (
+                            <Card title="Prédiction vs Réalité" icon={<CrystalBallIcon size={24} />}>
+                                <div className="mt-4">
+                                    <GenericChart
+                                        data={predictions}
+                                        xKey="timestamp"
+                                        series={[
+                                            { key: 'predicted_price', label: 'Prix Prédit', color: 'var(--accent-primary)', type: 'line' },
+                                            { key: 'actual_price', label: 'Prix Réel', color: 'var(--accent-success)', type: 'line' },
+                                            // { key: 'confidence_interval_high', label: 'Int. Haut', color: 'var(--accent-danger)', type: 'area' }
+                                        ]}
+                                        formatY={(v) => `$${v.toLocaleString()}`}
+                                        height={350}
+                                    />
                                 </div>
                             </Card>
                         )}
@@ -153,7 +183,8 @@ export default function PredictionsPage() {
                                             const error = p.actual_price
                                                 ? Math.abs((p.predicted_price - p.actual_price) / p.actual_price) * 100
                                                 : null;
-                                            const inRange = p.actual_price
+
+                                            const inRange = (p.actual_price && p.confidence_interval_low !== null && p.confidence_interval_high !== null)
                                                 ? p.actual_price >= p.confidence_interval_low &&
                                                 p.actual_price <= p.confidence_interval_high
                                                 : null;
@@ -174,7 +205,10 @@ export default function PredictionsPage() {
                                                         }
                                                     </td>
                                                     <td className="font-mono text-sm text-[var(--foreground-muted)]">
-                                                        ${p.confidence_interval_low.toLocaleString()} - ${p.confidence_interval_high.toLocaleString()}
+                                                        {p.confidence_interval_low !== null && p.confidence_interval_high !== null
+                                                            ? `$${p.confidence_interval_low.toLocaleString()} - $${p.confidence_interval_high.toLocaleString()}`
+                                                            : <span className="text-[var(--foreground-muted)]">--</span>
+                                                        }
                                                     </td>
                                                     <td>
                                                         {error !== null ? (
