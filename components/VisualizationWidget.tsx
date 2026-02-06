@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, LoadingSpinner, SimpleChart, ErrorDisplay, PlusIcon } from '@/components';
+import Card from './Card';
+import LoadingSpinner from './LoadingSpinner';
+import { SimpleChart } from './SimpleChart';
+import ErrorDisplay from './ErrorDisplay';
+import { PlusIcon } from './Icons';
 import { getTickerHistory, SYMBOL_TO_PAIR } from '@/lib/api';
 import type { VisualizationParameter, TickerData, HistoryQueryParams } from '@/lib/types';
 
@@ -23,7 +27,7 @@ export function VisualizationWidget({ config }: WidgetProps) {
 
                 const params: HistoryQueryParams = {
                     pair: pair,
-                    periode: config.time_range as any
+                    periode: config.time_range as HistoryQueryParams['periode']
                 };
 
                 const res = await getTickerHistory(params);

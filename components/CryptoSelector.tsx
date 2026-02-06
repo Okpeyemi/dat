@@ -4,6 +4,14 @@ import { useEffect, useState } from 'react';
 import { getCryptoConfigs } from '@/lib/api';
 import type { CryptoConfiguration } from '@/lib/types';
 import { SYMBOL_TO_PAIR } from '@/lib/config';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CryptoSelectorProps {
     value: string;
@@ -45,23 +53,26 @@ export default function CryptoSelector({
         return symbol.includes('/') ? symbol.split('/')[0] : symbol;
     };
 
+    if (loading) {
+        return <Skeleton className="h-10 w-[180px]" />;
+    }
+
     return (
-        <select
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            disabled={loading}
-            className="min-w-[150px]"
-        >
-            {showAll && <option value="">Toutes les cryptos</option>}
-            {loading ? (
-                <option>Chargement...</option>
-            ) : (
-                cryptos.map((crypto) => (
-                    <option key={crypto.id} value={getValue(crypto.symbol)}>
-                        {crypto.symbol} - {crypto.name}
-                    </option>
-                ))
-            )}
-        </select>
+        <Select value={value} onValueChange={onChange}>
+            <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sélectionner actif" />
+            </SelectTrigger>
+            <SelectContent>
+                {showAll && <SelectItem value="">Toutes les cryptos</SelectItem>}
+                {cryptos.map((crypto) => {
+                    const val = getValue(crypto.symbol);
+                    return (
+                        <SelectItem key={crypto.id} value={val}>
+                            {crypto.symbol} - {crypto.name}
+                        </SelectItem>
+                    );
+                })}
+            </SelectContent>
+        </Select>
     );
 }

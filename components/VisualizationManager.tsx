@@ -1,7 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, LoadingSpinner, PlusIcon, CheckIcon, XIcon, ListIcon, ChartBarIcon } from '@/components';
+import Card from './Card';
+import LoadingSpinner from './LoadingSpinner';
+import { PlusIcon, CheckIcon, XIcon, ListIcon, ChartBarIcon } from './Icons';
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import {
     getVisualizationConfigs,
     createVisualizationConfig,
@@ -9,6 +20,7 @@ import {
     deleteVisualizationConfig
 } from '@/lib/api';
 import type { VisualizationParameter, VisualizationParameterRequest } from '@/lib/types';
+import { Label } from './ui/label';
 
 export function VisualizationManager() {
     const [loading, setLoading] = useState(true);
@@ -134,108 +146,118 @@ export function VisualizationManager() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
             <Card
                 title={editingId ? "Modifier visualisation" : "Nouvelle visualisation"}
-                icon={<ChartBarIcon size={24} />}
+                icon={<ChartBarIcon className="w-6 h-6" />}
                 subtitle="Configurer vos préférences de graphiques"
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-[var(--foreground-muted)] mb-2">Nom de la configuration</label>
-                        <input
+                    <div className="space-y-2">
+                        <Label>Nom de la configuration</Label>
+                        <Input
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full"
                             placeholder="ex: Dashboard BTC Trading"
                             required
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--foreground-muted)] mb-2">Crypto</label>
-                            <input
+                        <div className="space-y-2">
+                            <Label>Crypto</Label>
+                            <Input
                                 type="text"
                                 value={formData.crypto_symbol}
                                 onChange={(e) => setFormData({ ...formData, crypto_symbol: e.target.value.toUpperCase() })}
-                                className="w-full"
                                 placeholder="ex: BTC"
                                 required
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--foreground-muted)] mb-2">Période</label>
-                            <select
+                        <div className="space-y-2">
+                            <Label>Période</Label>
+                            <Select
                                 value={formData.time_range}
-                                onChange={(e) => setFormData({ ...formData, time_range: e.target.value })}
-                                className="w-full p-2 rounded-lg bg-[var(--background-secondary)] border border-[var(--border-color)]"
+                                onValueChange={(value) => setFormData({ ...formData, time_range: value })}
                             >
-                                <option value="1h">1 heure</option>
-                                <option value="24h">24 heures</option>
-                                <option value="7d">7 jours</option>
-                                <option value="30d">30 jours</option>
-                            </select>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Choisir une période" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="1h">1 heure</SelectItem>
+                                    <SelectItem value="24h">24 heures</SelectItem>
+                                    <SelectItem value="7d">7 jours</SelectItem>
+                                    <SelectItem value="30d">30 jours</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-[var(--foreground-muted)] mb-2">Type de graphique</label>
-                        <select
+                    <div className="space-y-2">
+                        <Label>Type de graphique</Label>
+                        <Select
                             value={formData.chart_type}
-                            onChange={(e) => setFormData({ ...formData, chart_type: e.target.value as any })}
-                            className="w-full p-2 rounded-lg bg-[var(--background-secondary)] border border-[var(--border-color)]"
+                            onValueChange={(value) => setFormData({ ...formData, chart_type: value as any })}
                         >
-                            <option value="candlestick">Chandeliers</option>
-                            <option value="line">Ligne</option>
-                            <option value="area">Aire</option>
-                            <option value="bar">Barres</option>
-                        </select>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Choisir un type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="candlestick">Chandeliers</SelectItem>
+                                <SelectItem value="line">Ligne</SelectItem>
+                                <SelectItem value="area">Aire</SelectItem>
+                                <SelectItem value="bar">Barres</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-[var(--foreground-muted)] mb-2">Indicateurs</label>
+                    <div className="space-y-2">
+                        <Label>Indicateurs</Label>
                         <div className="flex flex-wrap gap-2">
                             {availableIndicators.map(ind => (
-                                <button
+                                <Button
                                     key={ind}
                                     type="button"
+                                    variant={formData.indicators?.includes(ind) ? "default" : "outline"}
+                                    size="sm"
                                     onClick={() => toggleIndicator(ind)}
-                                    className={`px-3 py-1 rounded-full text-xs transition-colors ${formData.indicators?.includes(ind)
-                                            ? 'bg-[var(--accent-primary)] text-white'
-                                            : 'bg-[var(--background-secondary)] text-[var(--foreground-muted)] border border-[var(--border-color)]'
-                                        }`}
+                                    className="h-7 text-xs"
                                 >
                                     {ind}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                     </div>
 
                     {error && (
-                        <div className="p-3 bg-[var(--accent-danger)]/10 text-[var(--accent-danger)] rounded-lg text-sm flex items-center gap-2">
-                            <XIcon size={16} /> {error}
+                        <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm flex items-center gap-2">
+                            <XIcon className="w-4 h-4" /> {error}
                         </div>
                     )}
                     {success && (
-                        <div className="p-3 bg-[var(--accent-success)]/10 text-[var(--accent-success)] rounded-lg text-sm flex items-center gap-2">
-                            <CheckIcon size={16} /> {success}
+                        <div className="p-3 bg-green-500/10 text-green-500 rounded-lg text-sm flex items-center gap-2">
+                            <CheckIcon className="w-4 h-4" /> {success}
                         </div>
                     )}
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 pt-2">
                         {editingId && (
-                            <button
+                            <Button
                                 type="button"
+                                variant="outline"
                                 onClick={handleCancelEdit}
-                                className="btn btn-neutral w-1/3"
+                                className="w-1/3"
                             >
                                 Annuler
-                            </button>
+                            </Button>
                         )}
-                        <button
+                        <Button
                             type="submit"
                             disabled={submitting || !formData.name || !formData.crypto_symbol}
-                            className={`btn btn-primary ${editingId ? 'w-2/3' : 'w-full'}`}
+                            className={editingId ? 'w-2/3' : 'w-full'}
                         >
-                            {submitting ? <span className="animate-spin mr-2">⏳</span> : <PlusIcon size={16} className="mr-2" />}
+                            {submitting ? (
+                                <span className="animate-spin mr-2">⏳</span>
+                            ) : (
+                                <PlusIcon className="w-4 h-4 mr-2" />
+                            )}
                             {editingId ? 'Mettre à jour' : 'Sauvegarder'}
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </Card>
@@ -256,8 +278,8 @@ export function VisualizationManager() {
                                 <div
                                     key={config.id}
                                     className={`p-4 rounded-xl border flex justify-between items-center ${editingId === config.id
-                                            ? 'border-[var(--accent-primary)] ring-1 ring-[var(--accent-primary)]'
-                                            : 'border-[var(--border-color)] bg-[var(--background-secondary)]'
+                                        ? 'border-[var(--accent-primary)] ring-1 ring-[var(--accent-primary)]'
+                                        : 'border-[var(--border-color)] bg-[var(--background-secondary)]'
                                         }`}
                                 >
                                     <div>

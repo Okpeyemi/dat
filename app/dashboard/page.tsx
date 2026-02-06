@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Header from '@/components/Header';
+import Card, { StatCard } from '@/components/Card';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ErrorDisplay from '@/components/ErrorDisplay';
+import { VisualizationManager } from '@/components/VisualizationManager';
+import { VisualizationWidget } from '@/components/VisualizationWidget';
+import { GenericChart } from '@/components/GenericChart';
 import {
-    Header,
-    Card,
-    StatCard,
-    LoadingSpinner,
-    ErrorDisplay,
     DiamondIcon,
     BellIcon,
     MaskIcon,
@@ -21,10 +23,8 @@ import {
     SmileIcon,
     FrownIcon,
     MehIcon,
-    VisualizationWidget,
     ActivityIcon,
-    GenericChart,
-} from '@/components';
+} from '@/components/Icons';
 import {
     getTickerHistory,
     getAlertHistory,

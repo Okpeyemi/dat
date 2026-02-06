@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Header, Card, PeriodSelector, CryptoSelector, LoadingSpinner, ErrorDisplay, NewspaperIcon, SmileIcon, FrownIcon, MehIcon, RefreshCwIcon } from '@/components';
+import Header from '@/components/Header';
+import Card from '@/components/Card';
+import PeriodSelector from '@/components/PeriodSelector';
+import CryptoSelector from '@/components/CryptoSelector';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ErrorDisplay from '@/components/ErrorDisplay';
+import { NewspaperIcon, SmileIcon, FrownIcon, MehIcon, RefreshCwIcon } from '@/components/Icons';
 import { getArticleHistory } from '@/lib/api';
 import type { ArticleData } from '@/lib/types';
 import type { Period } from '@/lib/config';

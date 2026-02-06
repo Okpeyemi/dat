@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Header, Card, LoadingSpinner, ErrorDisplay, PlusIcon, DiamondIcon, CheckIcon, XIcon, VisualizationManager } from '@/components';
+import Header from '@/components/Header';
+import Card from '@/components/Card';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ErrorDisplay from '@/components/ErrorDisplay';
+import { VisualizationManager } from '@/components/VisualizationManager';
+import { PlusIcon, DiamondIcon, CheckIcon, XIcon } from '@/components/Icons';
 import { getCryptoConfigs, createCryptoConfig, updateCryptoConfig, deleteCryptoConfig } from '@/lib/api';
 import type { CryptoConfiguration, CryptoConfigurationRequest } from '@/lib/types';
 

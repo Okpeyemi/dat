@@ -1,6 +1,13 @@
 'use client';
 
 import { PERIODS, type Period } from '@/lib/config';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface PeriodSelectorProps {
     value: Period;
@@ -8,6 +15,7 @@ interface PeriodSelectorProps {
 }
 
 const periodLabels: Record<Period, string> = {
+    'live': 'Live',
     '1m': '1 minute',
     '5m': '5 minutes',
     '30m': '30 minutes',
@@ -19,19 +27,17 @@ const periodLabels: Record<Period, string> = {
 
 export default function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
     return (
-        <div className="flex items-center gap-1 bg-[var(--background-secondary)] p-1 rounded-lg">
-            {PERIODS.map((period) => (
-                <button
-                    key={period}
-                    onClick={() => onChange(period)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${value === period
-                        ? 'bg-[var(--accent-primary)] text-white'
-                        : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--background-card)]'
-                        }`}
-                >
-                    {periodLabels[period]}
-                </button>
-            ))}
-        </div>
+        <Select value={value} onValueChange={(val) => onChange(val as Period)}>
+            <SelectTrigger className="w-[140px] bg-background">
+                <SelectValue placeholder="Période" />
+            </SelectTrigger>
+            <SelectContent>
+                {PERIODS.map((period) => (
+                    <SelectItem key={period} value={period}>
+                        {periodLabels[period]}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
     );
 }
